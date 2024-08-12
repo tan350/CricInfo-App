@@ -1,0 +1,1235 @@
+﻿
+@model Dictionary<string, object>
+
+@using Syncfusion.EJ2.Buttons
+@using Syncfusion.EJ2.Inputs
+@using Syncfusion.EJ2.DropDowns
+@using Syncfusion.EJ2.Grids
+
+@{
+    ViewBag.Title = "Match";
+}
+
+@*================================================NavBar===============================================================*@
+
+<div class="custom-navbar" id="navbarScoreBoard">
+    <ul>
+        <li><a href="#" onclick="showSection('toss-section')">Toss</a></li>
+        <li><a href="#" onclick="showSection('team-players')">Team Players</a></li>
+        <li><a href="#" onclick="showSection('match-details-section')">Update Score</a></li>
+        <li><a href="#" onclick="showSection('Batting')">Batting</a></li>
+        <li><a href="#" onclick="showSection('Fow')">Bowling/ Fall of Wicket</a></li>
+        <li><a href="#" onclick="showSection('Commentary')">Commentary</a></li>
+    </ul>
+</div>
+@*================================================NavBar Style====================================================================*@
+<style>
+    .custom-navbar {
+        background-color: navy;
+        color: white;
+        padding: 10px 20px;
+        overflow: hidden;
+    }
+
+        .custom-navbar ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .custom-navbar li {
+            float: left;
+        }
+
+            .custom-navbar li a {
+                display: block;
+                color: white;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
+            }
+
+                .custom-navbar li a:hover {
+                    background-color: #111;
+                }
+</style>
+@*================================================NavBar Script==================================================================*@
+<script>
+    function showSection(sectionId) {
+
+        var tossSection = document.getElementById('toss-section');
+        var matchDetailsSection = document.getElementById('match-details-section');
+        var teamPlayersSection = document.getElementById('team-players');
+        var fowSection = document.getElementById('Fow');
+        var battingSection = document.getElementById('Batting');
+        var commentarySection = document.getElementById('Commentary');
+
+        if (tossSection) tossSection.style.display = 'none';
+        if (matchDetailsSection) matchDetailsSection.style.display = 'none';
+        if (teamPlayersSection) teamPlayersSection.style.display = 'none';
+        if (fowSection) fowSection.style.display = 'none';
+        if (battingSection) battingSection.style.display = 'none';
+        if (commentarySection) commentarySection.style.display = 'none';
+
+
+        var selectedSection = document.getElementById(sectionId);
+        if (selectedSection == teamPlayersSection) {
+            selectedSection.style.display = 'flex';
+        }
+        else if (selectedSection == Fow) {
+            selectedSection.style.display = 'flex';
+        }
+        else if (selectedSection) {
+            selectedSection.style.display = 'block';
+        } else {
+            console.error("Section with ID '" + sectionId + "' not found.");
+        }
+    }
+</script>
+@*================================================Team name header===============================================================*@
+
+<h2><img src="data:image/png;base64,@(Convert.ToBase64String((byte[])Model["Team1Icon"]))" alt="Team 1 Icon" style="max-width: 50px; max-height: 50px;" />  @((string)Model["Team1ShortName"])     V/S     <img src="data:image/png;base64,@(Convert.ToBase64String((byte[])Model["Team2Icon"]))" alt="Team 2 Icon" style="max-width: 50px; max-height: 50px;" /> @((string)Model["Team2ShortName"]) </h2>
+
+@*============================================================Toss===============================================================*@
+<div id="toss-section" style="display:none;">
+    @Html.EJS().Button("tossButton").Content("Do the Toss").CssClass("e-outline e-primary").Render()
+    <div id="toss-result" style="display:none;">
+        <h3 id="toss-winner"></h3>
+
+        @using (Html.BeginForm("RecordToss", "ScoreBoard", FormMethod.Post, new { id = "tossForm" }))
+        {
+            <input type="hidden" name="MatchID" value="@Model["MatchID"]" />
+            <input type="hidden" id="tossWonBy" name="TossWonBy" />
+            <input type="hidden" id="tossDecisionTextbox" name="TossDecision" />
+
+            @Html.EJS().ChipList("tossDecision").Selection(Selection.Single).CssClass("e-outline").Chips(chips =>
+       {
+           chips.Text("Batting").Enabled(true).Add();
+           chips.Text("Bowling").Enabled(true).Add();
+       }).Render()
+
+            <button id="continueButton" type="button" class="e-outline e-primary">Continue</button>
+        }
+
+    </div>
+</div>
+
+
+@*==========================================================================Toss Script==========================================*@
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        document.getElementById('tossButton').addEventListener('click', performToss);
+        document.getElementById('continueButton').addEventListener('click', recordToss);
+    });
+
+    function performToss() {
+        const team1 = '@Model["Team1ID"]';
+        const team2 = '@Model["Team2ID"]';
+        const teams = [team1, team2];
+        const winner = teams[Math.floor(Math.random() * teams.length)];
+        if (winner == team1)
+        {
+            document.getElementById('toss-winner').innerText = '@Model["Team1Name"] (@Model["Team1ShortName"])' + ' won the toss';
+        }
+        else {
+            document.getElementById('toss-winner').innerText = '@Model["Team2Name"] (@Model["Team2ShortName"] )' + ' won the toss';
+        }
+        document.getElementById('toss-result').style.display = 'block';
+
+        document.getElementById('tossWonBy').value = winner === '@Model["Team1ID"]' ? '@Model["Team1ID"]' : '@Model["Team2ID"]';
+    }
+
+    function recordToss() {
+
+        const chipListInstance = document.getElementById('tossDecision').ej2_instances[0];
+        console.log(chipListInstance);
+
+        if (!chipListInstance) {
+            alert("Error retrieving toss decision instance.");
+            return;
+        }
+
+        const selectedChips = chipListInstance.properties.selectedChips;
+
+        if (selectedChips == 0)
+        {
+            decision = 'Batting';
+        }
+        else
+        {
+            decision = 'Bowling';
+        }
+
+        console.log("Selected decision:", decision);
+
+        if (decision !== 'Batting' && decision !== 'Bowling') {
+            alert("Please enter 'Batting' or 'Bowling' for the toss decision.");
+            return;
+        }
+
+        const tossDecisionTextbox = document.getElementById('tossDecisionTextbox');
+        if (!tossDecisionTextbox) {
+            alert("Error: Toss decision textbox not found.");
+            return;
+        }
+
+        tossDecisionTextbox.value = decision;
+
+        const tossSection = document.getElementById('toss-section');
+        const teamPlayersSection = document.getElementById('team-players');
+
+        if (!tossSection || !teamPlayersSection) {
+            alert("Error: Required sections not found.");
+            return;
+        }
+
+        tossSection.style.display = 'none';
+        teamPlayersSection.style.display = 'flex';
+
+
+        const form = document.getElementById('tossForm');
+
+        if (!form) {
+            alert("Error: Toss form not found.");
+            return;
+        }
+
+        // Submit the form using AJAX for asynchronous handling
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert("Failed to save toss decision.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred while saving toss decision.");
+            });
+    }
+
+</script>
+
+
+@*============================================================Update Score===============================================================*@
+<div id="match-details-section" style="display:none;">
+    <div>
+        <label>Select Player on Strike:</label>
+        @Html.EJS().DropDownList("playerOnStrike").Placeholder("Select player on strike").DataSource((IEnumerable<object>)ViewBag.PlayerListOrdered).Fields(new Syncfusion.EJ2.DropDowns.DropDownListFieldSettings { Value = "PlayerId", Text = "Name" }).Render()
+    </div>
+    <div>
+        <label>Select Player off Strike:</label>
+        @Html.EJS().DropDownList("playerOffStrike").Placeholder("Select player off strike").DataSource((IEnumerable<object>)ViewBag.PlayerListOrdered).Fields(new Syncfusion.EJ2.DropDowns.DropDownListFieldSettings { Value = "PlayerId", Text = "Name" }).Render()
+    </div>
+    <div>
+        <label>Select Bowler:</label>
+        @Html.EJS().DropDownList("bowler").Placeholder("Select Bowler").DataSource((IEnumerable<object>)ViewBag.BowlerOpposed).Fields(new Syncfusion.EJ2.DropDowns.DropDownListFieldSettings { Value = "PlayerID", Text = "Name" }).Render()
+    </div>
+    @Html.EJS().ChipList("scoreUpdate").Selection(Selection.Single).CssClass("e-outline e-primary").Chips(chips =>
+    {
+        chips.Text("1 Run").Enabled(true).Add();
+        chips.Text("2 Runs").Enabled(true).Add();
+        chips.Text("3 Runs").Enabled(true).Add();
+        chips.Text("4 Runs").Enabled(true).Add();
+        chips.Text("6 Runs").Enabled(true).Add();
+        chips.Text("Extras").Enabled(true).Add();
+        chips.Text("Out").Enabled(true).Add();
+    }).Render()
+
+    @Html.EJS().ChipList("extrasChips").Selection(Selection.Single).CssClass("e-outline e-info").Chips(chips =>
+    {
+        chips.Text("No Ball").Add();
+        chips.Text("Wide Ball").Add();
+    }).Render()
+
+    @Html.EJS().ChipList("outChips").Selection(Selection.Single).CssClass("e-outline e-danger").Chips(chips =>
+    {
+        chips.Text("Catch Out").Add();
+        chips.Text("Run Out").Add();
+        chips.Text("Bowled Out").Add();
+        chips.Text("LBW").Add();
+        chips.Text("Stumped").Add();
+        chips.Text("Hit Wicket").Add();
+    }).Render()
+
+    @Html.EJS().Button("updateScoreButton").Content("Update Score").CssClass("e-outline e-info").Render()
+</div>
+@*================================================================Update Score Script===========================================================*@
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/Scripts/jquery.signalR-2.4.3.min.js"></script>
+<script src="~/signalr/hubs"></script>
+
+
+<script>
+    // Assign Razor model values to JavaScript variables
+    var team1ID = '@Model["Team1ID"]';
+    var team2ID = '@Model["Team2ID"]';
+
+    // Initialize SignalR
+    var selectedChip = '';
+    var cricketHub = $.connection.cricketHub;
+    var ballsBowled = 0; // Total valid balls bowled in the match
+    var ballsInOver = 0; // Balls bowled in the current over
+    var overNumber = 1;  // Start with the first over
+    var currentInning = 1; // Start with the first inning
+    var wicketsLost = 0; // Wickets lost in the current inning
+    var runsScoredInInning = 0; // Runs scored in the current inning
+    var battingTeamID = team1ID; // Initial Batting Team ID
+    var bowlingTeamID = team2ID; // Initial Bowling Team ID
+    var matchID = @Model["MatchID"];
+    $.connection.hub.start()
+        .done(function () {
+            console.log("SignalR connection established.")
+            /*console.log(cricketHub);
+            cricketHub.server.sendCommentary("ram ram");*/
+        })
+        .fail(function (error) {
+            console.error('SignalR connection error: ' + error);
+        });
+
+    cricketHub.client.updateCommentary = function (commentary) {
+        const newCommentary = document.createElement('p');
+        newCommentary.innerText = commentary;
+        document.getElementById('commentaryContent').prepend(newCommentary);
+    };
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var extrasChips = document.getElementById('extrasChips');
+        var outChips = document.getElementById('outChips');
+
+        // Initially hide extrasChips and outChips
+        extrasChips.style.display = 'none';
+        outChips.style.display = 'none';
+
+        document.getElementById('scoreUpdate').addEventListener('click', function (args) {
+            selectedChip = args.target.innerText.trim();
+
+            if (selectedChip === 'Extras') {
+                extrasChips.style.display = 'block';
+                outChips.style.display = 'none';
+            } else if (selectedChip === 'Out') {
+                outChips.style.display = 'block';
+                extrasChips.style.display = 'none';
+            } else {
+                extrasChips.style.display = 'none';
+                outChips.style.display = 'none';
+            }
+        });
+
+
+        // Add event listener for outChips
+        document.getElementById('outChips').addEventListener('click', function (args) {
+            selectedChip = args.target.innerText.trim();
+
+            if (selectedChip === 'Catch Out' || selectedChip === 'Run Out' || selectedChip === 'Bowled Out' ||
+                selectedChip === 'LBW' || selectedChip === 'Stumped' || selectedChip === 'Hit Wicket') {
+
+                // Ensure updateScoreButton is aware of the selected dismissal chip
+                //document.getElementById('updateScoreButton').click();
+            }
+        });
+
+        // Add event listener for extrasChips
+        document.getElementById('extrasChips').addEventListener('click', function (args) {
+            selectedChip = args.target.innerText.trim();
+
+            if (selectedChip === 'No Ball' || selectedChip === 'Wide Ball') {
+                //document.getElementById('updateScoreButton').click();
+            }
+        });
+
+    });
+
+    document.getElementById('updateScoreButton').addEventListener('click', function () {
+        var chipText = selectedChip;
+        if (!chipText) {
+            alert('Please select a score update chip first.');
+            return;
+        }
+
+        const playerOnStrike = document.getElementById('playerOnStrike').ej2_instances[0].text;
+        const playerOffStrike = document.getElementById('playerOffStrike').ej2_instances[0].text;
+        const bowler = document.getElementById('bowler').ej2_instances[0].text;
+        const playerOnStrikeId = document.getElementById('playerOnStrike').ej2_instances[0].value;
+        const playerOffStrikeId = document.getElementById('playerOffStrike').ej2_instances[0].value;
+        const bowlerId = document.getElementById('bowler').ej2_instances[0].value;
+
+        // Initialize default values for batting statistics
+        let runs = 0, balls = 1, fours = 0, sixes = 0, extras = 0;
+        let commentaryText = `${playerOnStrike}`;
+
+        // Update batting statistics and commentary based on selected chip
+        switch (chipText) {
+            case '1 Run':
+                runs = 1;
+                commentaryText += ` scored 1 run off ${bowler}'s delivery.`;
+                break;
+            case '2 Runs':
+                runs = 2;
+                commentaryText += ` scored 2 runs off ${bowler}'s delivery.`;
+                break;
+            case '3 Runs':
+                runs = 3;
+                commentaryText += ` scored 3 runs off ${bowler}'s delivery.`;
+                break;
+            case '4 Runs':
+                runs = 4;
+                fours = 1;
+                commentaryText += ` hit a boundary off ${bowler}'s delivery.`;
+                break;
+            case '6 Runs':
+                runs = 6;
+                sixes = 1;
+                commentaryText += ` hit a six off ${bowler}'s delivery.`;
+                break;
+            case 'No Ball':
+                balls = 0; // No ball does not count as a valid ball
+                extras = 1;  // No ball gives one extra run
+                commentaryText += ` benefited from a No Ball by ${bowler}.`;
+                break;
+            case 'Wide Ball':
+                balls = 0; // Wide ball does not count as a valid ball
+                extras = 1;  // Wide ball gives one extra run
+                commentaryText += ` benefited from a Wide Ball by ${bowler}.`;
+                break;
+            case 'Catch Out':
+            case 'Run Out':
+            case 'Bowled Out':
+            case 'LBW':
+            case 'Stumped':
+            case 'Hit Wicket':
+                // Increment wicketsLost
+                wicketsLost++;
+
+                // Prepare data for fall of wicket
+                const wicketType = getWicketTypeId(chipText);
+
+                // Update commentary for wicket taken
+                commentaryText += ` got out ${chipText} by ${bowler}.`;
+
+                // Send AJAX request to update fall of wicket
+                $.ajax({
+                    type: 'POST',
+                    url: '/ScoreBoard/UpdateFallOfWicket', // Endpoint to handle fall of wicket update
+                    data: {
+                        matchId: matchID,
+                        batsmanId: playerOnStrikeId,
+                        bowlerId: bowlerId,
+                        wicketTypeId: wicketType,
+                        fielderId: null, // You may need to modify this to include fielder if available
+                        inningNumber: currentInning,
+                        runsScored: runsScoredInInning,
+                        wicketsLost: wicketsLost,
+                        oversBowled: overNumber - 1 + (ballsInOver - 1) / 6
+                    },
+                    success: function (response) {
+                        // Update UI commentary via SignalR
+                        cricketHub.server.sendCommentary(commentaryText);
+
+                        alert(response.message);
+                    },
+                    error: function (error) {
+                        console.error('Error updating fall of wicket:', error);
+                        alert('Error updating fall of wicket. Please try again.');
+                    }
+                });
+                return; // Exit the function since wicket update is handled
+                /*break;*/
+            default:
+                commentaryText += ` performed an action: ${chipText}.`;
+                break;
+        }
+
+        // Calculate Strike Rate
+        const strikeRate = ballsBowled === 0 ? 0 : ((runs / ballsBowled) * 100).toFixed(2);
+
+        // Increment ball number and over number only for valid balls
+        if (balls === 1) {
+            ballsBowled++;
+            ballsInOver++;
+            runsScoredInInning += runs;
+            if (ballsInOver > 6) {
+                ballsInOver = 1;
+                overNumber++;
+            }
+        } else {
+            // Increment runs for extra balls
+            runsScoredInInning += extras;
+        }
+
+        // Check if the inning should end
+        const maxOvers = 20; // Max overs per inning
+        const maxWickets = 10; // Max wickets per inning
+
+        if (overNumber > maxOvers || wicketsLost >= maxWickets) {
+            // Post inning data
+            $.ajax({
+                type: 'POST',
+                url: '/ScoreBoard/EndInning', // Endpoint to handle the end of an inning
+                data: {
+                    matchID: matchID,
+                    inningNumber: currentInning,
+                    battingTeamID: battingTeamID,
+                    bowlingTeamID: bowlingTeamID,
+                    runsScored: runsScoredInInning,
+                    wicketsLost: wicketsLost,
+                    oversBowled: overNumber - 1 + (ballsInOver - 1) / 6
+                },
+                success: function (response) {
+                    // Inform about the new inning start
+                    cricketHub.server.sendCommentary(`Inning ${currentInning} ended. Starting Inning ${currentInning + 1}.`);
+
+                    alert(response.message);
+
+                    // Transition to the next inning
+                    currentInning++;
+                    ballsBowled = 0;
+                    ballsInOver = 0;
+                    overNumber = 1;
+                    wicketsLost = 0;
+                    runsScoredInInning = 0;
+
+                    // Swap batting and bowling teams for the next inning
+                    var temp = battingTeamID;
+                    battingTeamID = bowlingTeamID;
+                    bowlingTeamID = temp;
+                },
+                error: function (error) {
+                    console.error('Error ending inning:', error);
+                    alert('Error ending inning. Please try again.');
+                }
+            });
+        }
+
+
+        // Send AJAX request to update batting stats
+        $.ajax({
+            type: 'POST',
+            url: '/ScoreBoard/UpdateBattingStats', // Replace with your server endpoint to update batting stats
+            data: {
+                playerOnStrikeId: playerOnStrikeId,
+                playerOffStrikeId: playerOffStrikeId,
+                bowlerId: bowlerId,
+                runs: runs,
+                balls: balls, // Use the balls variable to indicate valid or extra balls
+                ballsBowled: ballsBowled, // Total valid balls bowled
+                fours: fours,
+                sixes: sixes,
+                strikeRate: strikeRate,
+                ballNumber: ballsInOver, // Current ball number within the over
+                overNumber: overNumber,   // Current over number
+                currentInning: currentInning // Current inning number
+            },
+            success: function (response) {
+                // Update UI commentary via SignalR
+                cricketHub.server.sendCommentary(commentaryText);
+                alert(response.message);
+            },
+            error: function (error) {
+                console.error('Error updating batting stats:', error);
+                alert('Error updating batting stats. Please try again.');
+            }
+        });
+
+        // Send AJAX request to update Ball table for each valid ball bowled
+        for (let i = 0; i < balls; i++) {
+            $.ajax({
+                type: 'POST',
+                url: '/ScoreBoard/UpdateBall',
+                data: {
+                    inningId: 8, /*inningId,*/ // Ensure to set the correct value
+                    overNumber: overNumber,
+                    ballNumber: ballsInOver - balls + i + 1,
+                    bowlerId: bowlerId,
+                    batsmanId: playerOnStrikeId,
+                    runsScored: runs,
+                    wicketId: 0 // Modify this as per actual logic
+                },
+                success: function (response) {
+                    alert(response.message);
+                },
+                error: function (error) {
+                    console.error('Error updating Ball table:', error);
+                    alert('Error updating Ball table. Please try again.');
+                }
+            });
+        }
+
+        // Send AJAX request to update Bowling table
+        $.ajax({
+            type: 'POST',
+            url: '/ScoreBoard/UpdateBowlingStats',
+            data: {
+                bowlerId: bowlerId,
+                teamId: bowlingTeamID, // Update with the correct team ID
+                matchId: matchID,
+                totalOver: overNumber - 1 + (ballsInOver - 1) / 6,
+                runsScored: runs,
+                maiden: 0, // Adjust as per your logic
+                wicketId: 0, // Modify this as per actual logic
+                eco: 0 // Adjust as per your logic
+            },
+            success: function (response) {
+                alert(response.message);
+            },
+            error: function (error) {
+                console.error('Error updating Bowling table:', error);
+                alert('Error updating Bowling table. Please try again.');
+            }
+        });
+
+        /*console.log(cricketHub);
+        cricketHub.server.sendCommentary(commentaryText);*/
+    });
+
+    function getWicketTypeId(wicketTypeText) {
+        switch (wicketTypeText) {
+            case 'Catch Out':
+                return 1;
+            case 'Bowled Out':
+                return 2;
+            case 'Run Out':
+                return 3;
+            case 'LBW':
+                return 4;
+            case 'Stumped':
+                return 5;
+            case 'Hit Wicket':
+                return 6;
+            default:
+                return 0; // Handle default case appropriately
+        }
+    }
+
+
+</script>
+
+
+@*====================================================================Team Players List ===============================================================*@
+<div id="team-players" style="display:none;">
+    <div class="listbox-control">
+        <h4>@Model["Team1Name"] Squads</h4>
+        @Html.EJS().ListBox("listbox1").AllowDragAndDrop(true).Created("groupACreated").Height("330px").Fields(new Syncfusion.EJ2.DropDowns.ListBoxFieldSettings { Text = "Name", Value = "PlayerID" }).ItemTemplate("itemTemplate").Render()
+
+        @Html.EJS().Button("savechange").Content("Update Order").Render()
+        <input type="hidden" id="matchId" value="@Model["MatchID"]" />
+        <input type="hidden" id="team1Id" value="@Model["Team1ID"]" />
+        <input type="hidden" id="team2Id" value="@Model["Team2ID"]" />
+    </div>
+    <div class="listbox-control">
+        <h4>@Model["Team2Name"] Squads</h4>
+        @Html.EJS().ListBox("listbox2").AllowDragAndDrop(true).Created("groupBCreated").Height("330px").Fields(new Syncfusion.EJ2.DropDowns.ListBoxFieldSettings { Text = "Name", Value = "PlayerID" }).ItemTemplate("itemTemplate").Render()
+    </div>
+</div>
+@*======================================================================Team Players Style===============================================================*@
+<style>
+    #team-players {
+        /*display: flex !important;*/
+        justify-content: space-between !important;
+    }
+
+    .listbox-control {
+        flex: 1 !important;
+        margin: 10px 10px !important;
+    }
+
+    .e-swap-icon {
+        display: none !important;
+    }
+</style>
+
+@*===============================================================Team Players Script=======================================================================*@
+@using Newtonsoft.Json
+<script>
+    var team1Players = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Team1Players));
+    var team2Players = @Html.Raw(JsonConvert.SerializeObject(ViewBag.Team2Players));
+
+    var listbox1, listbox2;
+
+    var dataA = new ej.data.DataManager({
+        json: team1Players
+    });
+
+    var dataB = new ej.data.DataManager({
+        json: team2Players
+    });
+
+    function itemTemplate(data) {
+        var roleText = data.Role ? ` [${data.Role}]` : '';
+        return `<div><span style="margin-left: 10px;">${data.Name}</span> <span style="margin-left: 10px;">(${data.PlayerType})</span>${roleText}</div>`;
+    }
+
+    function groupACreated() {
+        listbox1 = ej.base.getComponent(document.querySelector('#listbox1'), 'listbox');
+        listbox1.dataSource = dataA;
+        listbox1.itemTemplate = itemTemplate;
+        listbox1.dataBind();
+    }
+
+    function groupBCreated() {
+        listbox2 = ej.base.getComponent(document.querySelector('#listbox2'), 'listbox');
+        listbox2.dataSource = dataB;
+        listbox2.itemTemplate = itemTemplate;
+        listbox2.dataBind();
+    }
+
+    document.getElementById("savechange").addEventListener("click", function() {
+        var team1PlayerIds = listbox1.getDataList().map(function (item) { return item.PlayerID; });
+        var team2PlayerIds = listbox2.getDataList().map(function (item) { return item.PlayerID; });
+        var matchId = document.getElementById("matchId").value;
+        var team1Id = document.getElementById("team1Id").value;
+        var team2Id = document.getElementById("team2Id").value;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "@Url.Action("SaveBattingOrder", "ScoreBoard")", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+        var data = JSON.stringify({
+            team1PlayerIds: team1PlayerIds,
+            team2PlayerIds: team2PlayerIds,
+            matchId: matchId,
+            team1Id: team1Id,
+            team2Id: team2Id
+        });
+        console.log(data);
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                alert("Batting order saved successfully!");
+            } else {
+                alert("Error saving batting order. Please try again.");
+            }
+        };
+        console.log(data);
+        xhr.send(data);
+
+        const teamPlayersSection = document.getElementById('team-players');
+        const matchDetailSection = document.getElementById('match-details-section');
+
+        if (!matchDetailSection || !teamPlayersSection) {
+            alert("Error: Required sections not found.");
+            return;
+        }
+
+        teamPlayersSection.style.display = 'none';
+        matchDetailSection.style.display = 'block';
+    });
+</script>
+
+@*======================================================Bowling and Fall of Wicket========================================================================*@
+<style>
+    .teams-scorecard {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .team-container {
+        width: 48%;
+    }
+
+    .team-header {
+        display: flex;
+        align-items: center;
+        border: 2px solid navy;
+        padding: 10px;
+        margin-bottom: 20px;
+        justify-content: flex-start;
+        background-color: navy;
+        height: 80px;
+    }
+
+        .team-header img {
+            width: 50px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .team-header h3 {
+            margin: 0;
+            padding: 0 10px;
+            color: white;
+        }
+
+    .stats-section {
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    table, th, td {
+        border: 1px solid white;
+    }
+
+        /* th, td {
+          padding: 8px;
+          text-align: center;
+      }*/
+
+        th img {
+            width: 40px;
+            height: 40px;
+        }
+</style>
+
+@{
+    var fallOfWicketDataTeam1 = ViewBag.FallOfWicketDataTeam1 as List<Dictionary<string, object>>;
+    var fallOfWicketDataTeam2 = ViewBag.FallOfWicketDataTeam2 as List<Dictionary<string, object>>;
+}
+
+@*<div id="Fow" style="display:none;" class="teams-scorecard">
+        <!-- Team 1 Fall of Wickets -->
+        <div class="team-container">
+            <div class="team-header">
+                <img src="data:image/png;base64,@(Convert.ToBase64String((byte[])Model["Team1Icon"]))" alt="Team 1 Icon" />
+                <h3>@Model["Team1Name"]</h3>
+            </div>
+            <div class="stats-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="color:navy;">Batsman</th>
+                            <th>Bowler</th>
+                            <th>Fielder</th>
+                            <th>Wicket Type</th>
+                            <th>Team Runs</th>
+                            <th>Team Wickets</th>
+                            <th>Team Overs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="team1-wickets">
+                        @if (fallOfWicketDataTeam1 != null)
+                        {
+                            foreach (var wicket in fallOfWicketDataTeam1)
+                            {
+                                <tr>
+                                    <td>@wicket["BatsmanName"]</td>
+                                    <td>@wicket["BowlerName"]</td>
+                                    <td>@wicket["FielderName"]</td>
+                                    <td>@wicket["WicketType"]</td>
+                                    <td>@wicket["TeamRuns"]</td>
+                                    <td>@wicket["TeamWickets"]</td>
+                                    <td>@wicket["TeamOvers"]</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Team 2 Fall of Wickets -->
+        <div class="team-container">
+            <div class="team-header">
+                <img src="data:image/png;base64,@(Convert.ToBase64String((byte[])Model["Team2Icon"]))" alt="Team 2 Icon" />
+                <h3>@Model["Team2Name"]</h3>
+            </div>
+            <div class="stats-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="color:navy;">Batsman</th>
+                            <th>Bowler</th>
+                            <th>Fielder</th>
+                            <th>Wicket Type</th>
+                            <th>Team Runs</th>
+                            <th>Team Wickets</th>
+                            <th>Team Overs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="team2-wickets">
+                        @if (fallOfWicketDataTeam2 != null)
+                        {
+                            foreach (var wicket in fallOfWicketDataTeam2)
+                            {
+                                <tr>
+                                    <td>@wicket["BatsmanName"]</td>
+                                    <td>@wicket["BowlerName"]</td>
+                                    <td>@wicket["FielderName"]</td>
+                                    <td>@wicket["WicketType"]</td>
+                                    <td>@wicket["TeamRuns"]</td>
+                                    <td>@wicket["TeamWickets"]</td>
+                                    <td>@wicket["TeamOvers"]</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>*@
+
+
+<div id="Fow" style="display:none;" class="teams-scorecard">
+    <!-- Team 1 Fall of Wickets -->
+    <div class="team-container">
+        <div class="team-header">
+            <img src="data:image/png;base64,@(Convert.ToBase64String((byte[])Model["Team1Icon"]))" alt="Team 1 Icon" />
+            <h3>@Model["Team1Name"]</h3>
+        </div>
+        <div class="stats-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="color:navy;"><img src="~/Content/Images/bowling.jpg" alt="Ball Image" /> BOWLING</th>
+                        <th>O</th>
+                        <th>R</th>
+                        <th>M</th>
+                        <th>W</th>
+                        <th>ECO</th>
+                    </tr>
+                </thead>
+                <tbody id="team1-wickets">
+                    @if (fallOfWicketDataTeam1 != null)
+                    {
+                        foreach (var wicket in fallOfWicketDataTeam2)
+                        {
+                            <tr>
+                                @*<td>@wicket["BowlerName"]</td>
+                                <td>@wicket["Overs"]</td>
+                                <td>@wicket["Runs"]</td>
+                                <td>@wicket["Maidens"]</td>
+                                <td>@wicket["Wickets"]</td>
+                                <td>@wicket["Economy"]</td>*@
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Team 2 Fall of Wickets -->
+    <div class="team-container">
+        <div class="team-header">
+            <img src="data:image/png;base64,@(Convert.ToBase64String((byte[])Model["Team2Icon"]))" alt="Team 2 Icon" />
+            <h3>@Model["Team2Name"]</h3>
+        </div>
+        <div class="stats-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="color:navy;"><img src="~/Content/Images/wicket.jpg" alt="Wicket Image" /> FALL OF WICKETS</th>
+                        <th>OVERS</th>
+                    </tr>
+                </thead>
+                <tbody id="team2-wickets">
+                    @if (fallOfWicketDataTeam2 != null)
+                    {
+                        foreach (var wicket in fallOfWicketDataTeam2)
+                        {
+                            <tr>
+                                <td>@wicket["TeamRuns"]/@wicket["TeamWickets"] @wicket["BatsmanName"]</td>
+                                <td>@wicket["TeamOvers"]</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    $(function () {
+        /* var cricketHub = $.connection.cricketHub;*/
+
+        cricketHub.client.updateWicket = function (wicket) {
+
+            var rowBowl = '<tr>' +
+                '<td>' + wicket.BowlerId + '</td>' +
+                '<td>' + wicket.FielderId + '</td>' +
+                '<td>' + wicket.DescriptionWicket + '</td>' +
+                '</tr>';
+            $('#team1-bowling').append(rowBowl);
+
+            var row = '<tr>' +
+                '<td>' + wicket.MatchId + '</td>' +
+                '<td>' + wicket.BatsmanId + '</td>' +
+                '<td>' + wicket.WicketTypeId + '</td>' +
+                '</tr>';
+            $('#team2-wickets').append(row);
+        };
+
+        /* $.connection.hub.start().done(function () {
+             console.log('SignalR connected');
+         });*/
+    });
+</script>
+
+
+
+@*=========================================================Batting with Inning========================================================================*@
+
+@{
+    var team1Name = Model["Team1Name"] as string;
+    var team2Name = Model["Team2Name"] as string;
+    var team1ShortName = Model["Team1ShortName"] as string;
+    var team2ShortName = Model["Team2ShortName"] as string;
+    var team1BattingData = ViewBag.BattingDataTeam1 as List<Dictionary<string, object>>;
+    var team2BattingData = ViewBag.BattingDataTeam2 as List<Dictionary<string, object>>;
+}
+
+<div id="Batting" style="display: none;">
+    <div class="navbar-block">
+        <div class="inning-navbar">
+            <ul>
+                <li><a href="#" onclick="showInningSection('team1-inning')">@team1Name Inning</a></li>
+            </ul>
+        </div>
+        <div class="inning-navbar">
+            <ul>
+                <li><a href="#" onclick="showInningSection('team2-inning')">@team2Name Inning</a></li>  
+            </ul>
+        </div>
+    </div>
+
+    <div class="inning-section" id="team1-inning" style="display:none;">
+        <h3>@team1ShortName Scores</h3>
+        @(Html.EJS().Grid("team1-battingTable").DataSource((IEnumerable<dynamic>)team1BattingData)
+            .Columns(col =>
+            {
+                col.Field("PlayerName").HeaderText("Player").Width("200").Add();
+                col.Field("Runs").HeaderText("R").Width("100").Add();
+                col.Field("Balls").HeaderText("B").Width("100").Add();
+                col.Field("Fours").HeaderText("4S").Width("100").Add();
+                col.Field("Sixes").HeaderText("6S").Width("100").Add();
+                col.Field("StrikeRate").HeaderText("S/R").Width("100").Add();
+            })
+            .Render())
+    </div>
+
+    <div class="inning-section" id="team2-inning" style="display:none;">
+        <h3>@team2ShortName Scores</h3>
+        @(Html.EJS().Grid("team2-battingTable").DataSource((IEnumerable<dynamic>)team2BattingData)
+            .Columns(col =>
+            {
+                col.Field("PlayerName").HeaderText("Player").Width("200").Add();
+                col.Field("Runs").HeaderText("R").Width("100").Add();
+                col.Field("Balls").HeaderText("B").Width("100").Add();
+                col.Field("Fours").HeaderText("4S").Width("100").Add();
+                col.Field("Sixes").HeaderText("6S").Width("100").Add();
+                col.Field("StrikeRate").HeaderText("S/R").Width("100").Add();
+            })
+            .Render())
+    </div>
+</div>
+
+
+
+@*========================================================================Batting with Inning Style=======================================================*@
+<style>
+    #Batting {
+        display: flex;
+        flex-direction: column;
+        max-width: 800px; /* Adjust as per your design */
+        margin: 0 auto; /* Centers the block horizontally */
+    }
+
+    .navbar-block {
+        display: inline-flex;
+    }
+
+    .inning-navbar {
+        background-color: navy;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        margin-bottom: 10px;
+        width: 400px;
+        margin-right: 10px;
+    }
+
+        .inning-navbar ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .inning-navbar ul li {
+                display: inline-block;
+                margin-right: 10px;
+            }
+
+        .inning-navbar a {
+            text-decoration: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+            .inning-navbar a:hover {
+                background-color: #333;
+            }
+
+    .inning-section {
+        background-color: #f2f2f2;
+        padding: 20px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+
+        .inning-section h3 {
+            margin-bottom: 10px;
+        }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+
+@*=============================================Batting with Inning Script=============================================================*@
+
+<script>
+    function showInningSection(sectionId) {
+        var team1Inning = document.getElementById('team1-inning');
+        var team2Inning = document.getElementById('team2-inning');
+
+        if (sectionId === 'team1-inning') {
+            team1Inning.style.display = 'block';
+            team2Inning.style.display = 'none';
+        } else if (sectionId === 'team2-inning') {
+            team1Inning.style.display = 'none';
+            team2Inning.style.display = 'block';
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var team1Grid = document.getElementById("team1-battingTable").ej2_instances[0];
+        var team2Grid = document.getElementById("team2-battingTable").ej2_instances[0];
+
+        if (team1Grid && @Html.Raw(JsonConvert.SerializeObject(team1BattingData)) !== null) {
+            var team1BattingData = @Html.Raw(JsonConvert.SerializeObject(team1BattingData));
+
+            team1BattingData.forEach(function (item) {
+                item.StrikeRate = item.Balls > 0 ? (item.Runs * 100 / item.Balls).toFixed(2) : "0.00";
+            });
+
+            team1Grid.dataSource = team1BattingData;
+        }
+
+        if (team2Grid && @Html.Raw(JsonConvert.SerializeObject(team2BattingData)) !== null) {
+            var team2BattingData = @Html.Raw(JsonConvert.SerializeObject(team2BattingData));
+
+            team2BattingData.forEach(function (item) {
+                item.StrikeRate = item.Balls > 0 ? (item.Runs * 100 / item.Balls).toFixed(2) : "0.00";
+            });
+
+            team2Grid.dataSource = team2BattingData;
+        }
+    });
+</script>
+
+
+@*<script id="template1" type="text/x-template">
+        @{ /* Razor code to embed C# in JavaScript */ }
+        var playerId = parseInt(${PlayerId});
+        var playerName = getPlayerName(playerId, team1Players);
+        if (playerName) {
+        ${PlayerId} = playerName;
+        } else {
+        ${PlayerId} = 'Unknown';
+        }
+    </script>
+
+
+    <script id="template2" type="text/x-template">
+        @{ /* Razor code to embed C# in JavaScript */ }
+        var playerId = parseInt(${PlayerId});
+        var playerName = getPlayerName(playerId, team2Players);
+        if (playerName) {
+        ${PlayerId} = playerName;
+        } else {
+        ${PlayerId} = 'Unknown';
+        }
+    </script>
+
+    <script>
+        var team1PlayersData = @Html.Raw(JsonConvert.SerializeObject(team1Players));
+        var team2PlayersData = @Html.Raw(JsonConvert.SerializeObject(team2Players));
+
+        function showInningSection(sectionId) {
+            var team1Inning = document.getElementById('team1-inning');
+            var team2Inning = document.getElementById('team2-inning');
+
+            if (sectionId === 'team1-inning') {
+                team1Inning.style.display = 'block';
+                team2Inning.style.display = 'none';
+            } else if (sectionId === 'team2-inning') {
+                team1Inning.style.display = 'none';
+                team2Inning.style.display = 'block';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var team1Grid = document.getElementById("team1-battingTable").ej2_instances[0];
+            var team2Grid = document.getElementById("team2-battingTable").ej2_instances[0];
+
+            if (team1Grid && @Html.Raw(JsonConvert.SerializeObject(team1BattingData)) !== null) {
+                var team1BattingData = @Html.Raw(JsonConvert.SerializeObject(team1BattingData));
+
+                team1BattingData.forEach(function (item) {
+                    item.StrikeRate = item.Balls > 0 ? (item.Runs * 100 / item.Balls).toFixed(2) : "0.00";
+                    item.PlayerName = getPlayerName(item.PlayerID, team1PlayersData);
+                });
+
+                team1Grid.dataSource = team1BattingData;
+            }
+
+            if (team2Grid && @Html.Raw(JsonConvert.SerializeObject(team2BattingData)) !== null) {
+                var team2BattingData = @Html.Raw(JsonConvert.SerializeObject(team2BattingData));
+
+                team2BattingData.forEach(function (item) {
+                    item.StrikeRate = item.Balls > 0 ? (item.Runs * 100 / item.Balls).toFixed(2) : "0.00";
+                    item.PlayerName = getPlayerName(item.PlayerID, team2PlayersData);
+                });
+
+                team2Grid.dataSource = team2BattingData;
+            }
+
+            function getPlayerName(playerId, playersList) {
+                var player;
+                playersList.forEach(function(playerData) {
+                    if (playerData.PlayerID === playerId) {
+                        player = playerData.Name;
+                    }
+                });
+                return player;
+            }
+        });
+    </script>*@
+
+@*=============================================Commentary=============================================================*@
+<div id="Commentary" class="Commentary" style="display: none;">
+    <div id="commentaryContent" style="display: block; color: navy; background-color: rgb(167, 230, 255); height: 200px; "></div>
+</div>
+
+@*====================================================================================================================*@
