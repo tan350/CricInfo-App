@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Vispl.Trainee.CricInfo.VO</name>
+    </assembly>
+    <members>
+        <member name="P:Vispl.Trainee.CricInfo.VO.UserVO.UserName">
+            <summary>
+            Gets or sets the username of the user.
+            </summary>
+        </member>
+        <member name="P:Vispl.Trainee.CricInfo.VO.UserVO.Password">
+            <summary>
+            Gets or sets the password of the user.
+            </summary>
+        </member>
+        <member name="P:Vispl.Trainee.CricInfo.VO.UserVO.UserRole">
+            <summary>
+            Gets or sets the role of the user.
+            </summary>
+        </member>
+        <member name="P:Vispl.Trainee.CricInfo.VO.UserVO.ErrorMessage">
+            <summary>
+            Gets or sets the error message.
+            </summary>
+        </member>
+    </members>
+</doc>

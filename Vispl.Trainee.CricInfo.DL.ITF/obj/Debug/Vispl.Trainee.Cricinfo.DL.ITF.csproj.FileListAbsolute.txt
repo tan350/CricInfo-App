@@ -1,0 +1,7 @@
+C:\Users\hp7\source\repos\ScoreBoard\Bin\Vispl.Trainee.CricInfo.DL.ITF.xml
+C:\Users\hp7\source\repos\ScoreBoard\Bin\Vispl.Trainee.CricInfo.DL.ITF.dll
+C:\Users\hp7\source\repos\ScoreBoard\Bin\Vispl.Trainee.CricInfo.DL.ITF.pdb
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.DL.ITF\obj\Debug\Vispl.Trainee.CricInfo.DL.ITF.csproj.AssemblyReference.cache
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.DL.ITF\obj\Debug\Vispl.Trainee.CricInfo.DL.ITF.csproj.CoreCompileInputs.cache
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.DL.ITF\obj\Debug\Vispl.Trainee.CricInfo.DL.ITF.dll
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.DL.ITF\obj\Debug\Vispl.Trainee.CricInfo.DL.ITF.pdb

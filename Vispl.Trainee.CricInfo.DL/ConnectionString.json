@@ -1,0 +1,6 @@
+{
+  "DataSource": "(localdb)\\MSSqlLocalDb",
+  "Database": "CricInfoDB",
+  "IntegratedSecurity": "True",
+  "TrustServerCertificate": "True"
+}

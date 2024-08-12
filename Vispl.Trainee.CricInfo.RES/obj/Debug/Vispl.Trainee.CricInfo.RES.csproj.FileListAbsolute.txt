@@ -1,0 +1,7 @@
+C:\Users\hp7\source\repos\ScoreBoard\Bin\Vispl.Trainee.CricInfo.RES.xml
+C:\Users\hp7\source\repos\ScoreBoard\Bin\Vispl.Trainee.CricInfo.RES.dll
+C:\Users\hp7\source\repos\ScoreBoard\Bin\Vispl.Trainee.CricInfo.RES.pdb
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.RES\obj\Debug\Vispl.Trainee.CricInfo.RES.csproj.AssemblyReference.cache
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.RES\obj\Debug\Vispl.Trainee.CricInfo.RES.csproj.CoreCompileInputs.cache
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.RES\obj\Debug\Vispl.Trainee.CricInfo.RES.dll
+C:\Users\hp7\source\repos\ScoreBoard\Vispl.Trainee.CricInfo.RES\obj\Debug\Vispl.Trainee.CricInfo.RES.pdb
